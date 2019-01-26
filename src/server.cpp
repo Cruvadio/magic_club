@@ -36,7 +36,6 @@ struct sockaddr_in sockaddr;
 int main(int argc, char *argv[])
 {
     uid_t euid;
-    key_t key;
     int opt = 1;
     int port;
     int i;
@@ -154,7 +153,6 @@ void* accept_client(void* args)
 {
     thread_args* arg = (thread_args*) args;
     int client_fd = arg->fd;
-    uint32_t pid;
     char buf[1024];
     
     if (safewrite(client_fd, SERVER_NAME, strlen(SERVER_NAME) * sizeof(char)))
@@ -165,18 +163,19 @@ void* accept_client(void* args)
     }
     if (!(arg->num) && connected < MAX_CONNECTIONS)
     {
-        write (client_fd, "You are the FIRST player\n\r", sizeof("You are the FIRST player\n\r"));
+        write (client_fd, "You are the FIRST player\n\r", 
+				sizeof("You are the FIRST player\n\r"));
         write (client_fd, WAIT, sizeof(WAIT));
         pthread_cond_wait(&cond, &mut);
         write (client_fd, FOUND, sizeof(FOUND));
     }
     else
     {
-        write (client_fd, "You are the SECOND player\n\r", sizeof("You are the SECOND player\n\r"));
+        write (client_fd, "You are the SECOND player\n\r", 
+				sizeof("You are the SECOND player\n\r"));
     }
     while (1)
     {
-        char ch;
         int err;
 
         game_status(client_fd);

@@ -1,40 +1,75 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
+#include "game.h"
+#include <vector>
+enum magic_t
+{
+    m_NONE,
+    LIGHT,
+    DARK,
+    FIRE,
+    WATER,
+    EARTH,
+    AIR
+};
+
+
+enum stat_t
+{
+	st_NONE,
+	HEALTH,
+	SHIELD,
+	DAMAGE
+};
+
+
+class Stats
+{
+	int health;
+	int shield;
+	magic_t left_hand;
+	magic_t right_hand;
+			
+	public:
+	    Stats(): health(100), shield(0), left_hand(m_NONE), right_hand(m_NONE){}
+		int getHealth() {	return health;	}
+		int getShield() {	return shield;	}
+		void setHealth(int health);
+		void setShield(int shield);
+		void addHealth(int health);
+		void addShield(int shield);
+
+		magic_t getLeftHand();
+		magic_t getRightHand();
+};
+class Buff
+{
+	int time;
+	stat_t st;
+	bool is_active;
+	
+	public:
+		Buff(): time(0), st(st_NONE), is_active(false) {}
+		Buff(Buff &buff);
+		Buff(int time, stat_t st =st_NONE, bool is_active = false);
+		int getTime();
+		void tick();
+		void activate();
+};
 
 class Player
 {
+    number_t number;
+    friend class Stats;
     Stats stat;
-    int socket_fd
+    int socket_fd;
+    std::vector<Buff> buffs;
+    bool is_alive;
+   
+    void scaleHealth ();
     public:
-	    Player(): stat(), socket_fd(-1) {}
-	    enum magic_t
-	    {
-		    NONE;
-		    LIGHT;
-		    DARK;
-		    FIRE;
-		    WATER;
-		    EARTH;
-		    AIR;
-	    }
-	    friend class Stats
-	    {
-		    int health;
-		    int shield;
-		    magic_t left_hand;
-		    magic_t right_hand;
-
-		    public:
-		    Stats(): health(100), shield(0), left_hand(NONE), right_hand(NONE){}
-		    int getHealth() {	return health;	}
-		    int getShield() {	return shield;	}
-		    void setHealth(int health);
-		    void setShield(int shield);
-
-		    magic_t getLeftHand();
-		    magic_t getRightHand();
-	    };
-
+	    Player(): stat(), socket_fd(-1), buffs(), is_alive(true) {}
+	   
 	    //
 	    // SERVER METHODS
 	    //
@@ -60,19 +95,4 @@ class Player
 
 };
 
-enum stat_t
-{
-	NONE;
-	HEALTH;
-	SHIELD;
-	DAMAGE;
-}
-
-class Buff
-{
-	int time;
-	stat_t st;
-	bool is_active;
-
-};
 #endif

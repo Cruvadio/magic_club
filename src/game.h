@@ -1,6 +1,10 @@
 #ifndef _GAME_H
+
 #define _GAME_H
+
 #include <pthread.h>
+#include "player.h"
+
 
 #define SERVER_NAME "Welcome to 'Mage Club' ver 0.0.3!\n\r"
 #define BUSY_MSG "'Mage Club Server ver 0.0.3: Sorry, the game has already started\n\r"
@@ -16,24 +20,36 @@
 #define READY 1
 #define WAITING 2
 
+
 /* Structures */
-typedef struct
+enum number_t
 {
-    int health;
-    int shield;
-}stat;
+    FIRST = 1,
+    SECOND
+};
 
-typedef struct
+class GameManager
 {
-    int num;
-    int status;
-    stat st;
-    int fd;
-}thread_args;
+    int socket_fd;
+    static GameManager game;
 
-extern pthread_mutex_t mut;
-extern pthread_cond_t cond;
-extern thread_args args[MAX_CONNECTIONS];
+    pthread_cond_t cond;
+    pthread_mutex_t mut;
+
+    Player players[MAX_CONNECTIONS];
+
+    public:
+        GameManager();
+
+        int acceptClients();
+        int declineClients();
+
+        void lock();
+        void unlock();
+        void wait();
+        void broadcast();
+};
+
 
 /* Functions */
 void game_status(int fd);
