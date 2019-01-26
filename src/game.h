@@ -1,5 +1,6 @@
 #ifndef _GAME_H
 #define _GAME_H
+#include <pthread.h>
 
 #define SERVER_NAME "Welcome to 'Mage Club' ver 0.0.3!\n\r"
 #define BUSY_MSG "'Mage Club Server ver 0.0.3: Sorry, the game has already started\n\r"
@@ -30,16 +31,16 @@ typedef struct
     int fd;
 }thread_args;
 
-pthread_mutex_t mut;
-pthread_cond_t cond;
-thread_args args[MAX_CONNECTIONS];
+extern pthread_mutex_t mut;
+extern pthread_cond_t cond;
+extern thread_args args[MAX_CONNECTIONS];
 
 /* Functions */
 void game_status(int fd);
 int scale_health (int health);
 
-int saferead(int, void*, ssize_t);
-int safewrite (int, void*, ssize_t);
-int readstr (int, char*, ssize_t);
+int saferead(int, void*, size_t);
+int safewrite (int, const void*, size_t);
+int readstr (int, char*, size_t);
 
 #endif

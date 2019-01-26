@@ -5,9 +5,6 @@
 #include "game.h"
 #include <pthread.h>
 
-extern pthread_mutex_t mut;
-extern pthread_cond_t cond;
-extern thread_args args[2];
 
 void game_status(int fd)
 {

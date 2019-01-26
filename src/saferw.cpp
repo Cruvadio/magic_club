@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+
 int saferead (int fd, void *a, size_t size)
 {
     size_t already_read = 0;
@@ -25,7 +26,7 @@ int saferead (int fd, void *a, size_t size)
     return 0;
 }
 
-int safewrite (int fd, void *a, size_t size)
+int safewrite (int fd,const void *a, size_t size)
 {
     size_t already_write = 0;
     while (already_write < size)
@@ -46,7 +47,7 @@ int safewrite (int fd, void *a, size_t size)
     return 0;
 }
 
-int readstr (int fd, char* buf, ssize_t max_size)
+int readstr (int fd, char* buf, size_t max_size)
 {
     int i = 0;
     char ch;
