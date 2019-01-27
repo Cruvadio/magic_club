@@ -13,6 +13,12 @@ enum magic_t
     AIR
 };
 
+enum mode_t
+{
+    WAITING,
+    READY
+};
+
 
 enum stat_t
 {
@@ -27,6 +33,7 @@ class Stats
 {
 	int health;
 	int shield;
+    friend class Player;
 	magic_t left_hand;
 	magic_t right_hand;
 			
@@ -60,15 +67,15 @@ class Buff
 class Player
 {
     number_t number;
-    friend class Stats;
     Stats stat;
     int socket_fd;
     std::vector<Buff> buffs;
+    mode_t mode;
     bool is_alive;
    
     void scaleHealth ();
     public:
-	    Player(): stat(), socket_fd(-1), buffs(), is_alive(true) {}
+	    Player(): stat(), socket_fd(-1), buffs(),mode(WAITING), is_alive(true) {}
 	   
 	    //
 	    // SERVER METHODS
@@ -77,7 +84,8 @@ class Player
 	    int getSocketFD() {	return socket_fd;   }
 	    int acceptPlayer(int socket_fd);
 	    void diconnectFromServer ();
-
+        mode_t getMode() { return mode; }
+        const char* handToString(int hand);
 	    //
 	    //  SPELLS
 	    //

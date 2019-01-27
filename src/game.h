@@ -16,10 +16,6 @@
 #define MAX_HEALTH 100
 #define MIN_HEALTH 0
 
-/* Statuses */
-#define READY 1
-#define WAITING 2
-
 
 /* Structures */
 enum number_t
@@ -40,6 +36,8 @@ class GameManager
 
     public:
         GameManager();
+        
+        void gameStatus();
 
         int acceptClients();
         int declineClients();

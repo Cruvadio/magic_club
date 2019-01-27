@@ -22,6 +22,64 @@ void Player::diconnectFromServer()
 	
 }
 
+const char* Player::handToString (int hand)
+{
+    if (hand)
+    {
+        switch (stat.right_hand)
+        {
+            case LIGHT:
+                return "Light magic";
+                break;
+            case DARK:
+                return "Dark magic";
+                break;
+            case FIRE:
+                return "Fireball";
+                break;
+            case WATER:
+                return "Water magic";
+                break;
+            case EARTH:
+                return "Earth magic";
+                break;
+            case AIR:
+                return "Ait magic";
+                break;
+            default:
+                return "Unknown magic";
+                break;
+        }
+    }
+    else
+    {
+        switch (stat.left_hand)
+        {
+            case LIGHT:
+                return "Light magic";
+                break;
+            case DARK:
+                return "Dark magic";
+                break;
+            case FIRE:
+                return "Fireball";
+                break;
+            case WATER:
+                return "Water magic";
+                break;
+            case EARTH:
+                return "Earth magic";
+                break;
+            case AIR:
+                return "Ait magic";
+                break;
+            default:
+                return "Unknown magic";
+                break;
+        }
+    }
+}
+
 void Stats::setShield(int shield)
 {
 	this->shield = shield;
