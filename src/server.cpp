@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <limits.h>
 #include "game.h"
+#include ".strings.h"
 
 int sem_id;
 int connections[MAX_CONNECTIONS];

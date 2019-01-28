@@ -1,12 +1,27 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include "player.h"
 #include "game.h"
 
-int Player::acceptPlayer(int socket_fd)
+
+Player::Player() : stat(), socket_fd(-1), buffs(), mode(WAITING), is_alive(true)
+{
+    number = FIRST;
+    pthread_cond_init(&cond, NULL);
+    pthread_mutex_init(&mut, NULL);
+}
+
+Player::~Player()
+{
+    pthread_cond_destroy(&cond);
+    pthread_mutex_destroy(&mut);
+}
+/*
+void* Player::acceptPlayer(void* args)
 {
 	this->socket_fd = accept(socket_fd, NULL, 0);
 	if(this->socket_fd == -1)
@@ -16,10 +31,30 @@ int Player::acceptPlayer(int socket_fd)
     }
     return this->socket_fd;
 }
-
+*/
 void Player::diconnectFromServer()
 {
 	
+}
+
+void Player::lock()
+{
+    pthread_mutex_lock(&mut);
+}
+
+void Player::unlock()
+{
+    pthread_mutex_unlock(&mut);
+}
+
+void Player::wait()
+{
+    pthread_cond_wait(&cond, &mut);
+}
+
+void Player::broadcast()
+{
+    pthread_cond_broadcast(&cond);
 }
 
 const char* Player::handToString (int hand)
