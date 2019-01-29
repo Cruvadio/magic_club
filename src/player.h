@@ -7,7 +7,7 @@
 #include "game.h"
 #include <vector>
 #include <pthread.h>
-enum mode_t
+enum status_t
 {
     WAITING,
     READY
@@ -74,12 +74,13 @@ class Player
     Stats stat;
     int socket_fd;
     std::vector<Buff> buffs;
-    mode_t mode;
+    status_t status;
     bool is_alive;
 
     pthread_cond_t cond;
     pthread_mutex_t mut;
    
+    int checkComand (char *str);
        public:
 	    Player();
 	    
@@ -92,11 +93,12 @@ class Player
 	    //
 	    // SERVER METHODS
 	    //
-
+        
+        void setSocketFD(int sock_fd);
 	    int getSocketFD() {	return socket_fd;   }
 	    void* acceptPlayer(void* args);
 	    void diconnectFromServer ();
-        mode_t getMode() { return mode; }
+        status_t getMode() { return status; }
         const char* handToString(int hand);
 
         void scaleHealth ();

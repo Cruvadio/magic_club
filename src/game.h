@@ -27,15 +27,19 @@ class GameManager
     // Singletone
     //
     static GameManager & game;
-
+    
+    int connected;
     pthread_cond_t cond;
     pthread_mutex_t mut;
 
+    public:
+    
     Player players[MAX_CONNECTIONS];
 
-    public:
         GameManager();
-        
+
+        int getConnected() {    return connected;   }
+        void setConnected(int connected);
         void gameStatus();
     
         void* acceptClients(void*); // For clients-threads
@@ -43,6 +47,7 @@ class GameManager
         
         void* waitForPlayers(void*); // For server-thread
         
+        static GameManager& getGameManager(){  return game;    }
         // Abbreviation for pthread library
         // functions
         void lock();

@@ -39,7 +39,7 @@ void GameManager::gameStatus()
     }
 }
 
-GameManager::GameManager() : socket_fd(-1), players()
+GameManager::GameManager() : socket_fd(-1), players(), connected(0)
 {
     game = *this;
     pthread_cond_init(&cond, NULL);
@@ -74,19 +74,31 @@ void GameManager::broadcast()
 void * GameManager::waitForPlayers (void* args)
 {
     int counter = 0;
+
+    for (int i = 0; i < MAX_CONNECTIONS; i++)
+    {
+        players[i].broadcast();
+    }
     while(true)
     {
         while (true)
         {
+            counter = 0;
             lock();
             for (int i = 0; i < MAX_CONNECTIONS; i++)
+            {
                 if (game.players[i].getMode() == READY)
                     counter++;
+            }
             if (counter == MAX_CONNECTIONS)
                 break;
             unlock();
             wait();
         }
         gameStatus();
+        for (int i = 0; i < MAX_CONNECTIONS; i++)
+        {
+            players[i].broadcast();
+        }
     }
 }

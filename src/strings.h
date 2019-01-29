@@ -5,6 +5,7 @@
 #define FIRST_PLAYER "You are the FIRST player\n\r"
 #define SECOND_PLAYER "You are the SECOND player\n\r"
 #define PROMT ">> "
+#define UNKNOWN_CMD "Unknown command!\n\r"
 #define SORRY "Sorry, another player has disconnected. Game over\n\r"
 #define WAIT "Waiting for oppponent...\n\r"
 #define FOUND "Another player has found\n\r"

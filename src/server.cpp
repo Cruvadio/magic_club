@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <limits.h>
 #include "game.h"
-#include ".strings.h"
+#include "strings.h"
 
 int sem_id;
 int connections[MAX_CONNECTIONS];
@@ -24,10 +24,6 @@ int sock_fd;
 pthread_mutex_t mut;
 pthread_cond_t cond;
 thread_args args[MAX_CONNECTIONS];
-
-pthread_mutex_t client_mut;
-pthread_cond_t client_cond;
-pthread_t threads[MAX_CONNECTIONS];
 
 void *accept_client(void *args);
 void exit_handler (int signum);
@@ -40,6 +36,9 @@ int main(int argc, char *argv[])
     int opt = 1;
     int port;
     int i;
+    pthread_t threads[MAX_CONNECTIONS];
+    pthread_t server_thread;
+
     if(argc < 2)
     {
         fprintf(stderr, "Not enough arguments\n");
@@ -49,11 +48,6 @@ int main(int argc, char *argv[])
     
     port = atoi(argv[1]);
     euid = geteuid();
-    
-    pthread_mutex_init(&mut,NULL);
-     pthread_mutex_init(&client_mut,NULL);
-    pthread_cond_init(&cond,NULL);
-    pthread_cond_init(&client_cond,NULL);
     
     if((port > USHRT_MAX) || (port < 0) || (euid && port < 1024))
     {
@@ -66,9 +60,9 @@ int main(int argc, char *argv[])
     {
         perror("Socket has not created\n");
         return 1;
-    }
-    
+    } 
     setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
     signal(SIGINT, exit_handler);
     signal(SIGTERM, exit_handler);
     
@@ -87,45 +81,38 @@ int main(int argc, char *argv[])
         perror("Can`t listen socket\n");
         return 1;
     }
-    for(i = 0; i < MAX_CONNECTIONS; i++)
-    {
-        args[i].fd = -1;
-    }
+
     while(1)
     {
         int i;
         int fd;
-        pthread_mutex_unlock(&mut);
+
         
-        if (connected < MAX_CONNECTIONS)
+        if (GameManager::getGameManager().getConnected() < MAX_CONNECTIONS)
         {
+            int connected = GameManager::getGameManager().getConnected();
             for (i = 0; i < MAX_CONNECTIONS; i++)
             {
-                if (args[i].fd == -1)
+                if (GameManager::getGameManager().players[i].getSocketFD()  == -1)
                 {
                     break;
                 }
             }
-            
-            args[i].fd = accept(sock_fd, NULL, 0);
-            if(args[i].fd == -1)
+            fd = accept(sock_fd, NULL, 0);
+            if(fd == -1)
             {
-                perror("Client socket has not created\n");
+                perror("Client socket has been not created\n");
                 return 1;
             }
-            pthread_mutex_lock(&mut);
+            GameManager::getGameManager().players[i].setSocketFD(fd);
+            GameManager::getGameManager().lock();
                 connected++;
-            pthread_mutex_unlock(&mut);
-            
+                GameManager::getGameManager().setConnected(connected);
+            GameManager::getGameManager().unlock();            
             if (connected == MAX_CONNECTIONS)
-                pthread_cond_broadcast(&cond);
+                GameManager::getGameManager().players[0].broadcast();
 
-            args[i].st.health = MAX_HEALTH;
-            args[i].st.shield = MIN_HEALTH;
-            args[i].num = i;
-
-
-            if(pthread_create(&threads[i],NULL,accept_client,&args[i]))
+            if(pthread_create(&threads[i],NULL,GameManager::getGameManager().players[i].acceptPlayer,&(fd))
             {
                 printf("Can't create thread\n");
 
@@ -135,6 +122,13 @@ int main(int argc, char *argv[])
         }
         else
         {
+            if(pthread_create(&threads[i],NULL,GameManager::getGameManager().waitForPlayers,&(fd))
+            {
+                printf("Can't create thread\n");
+
+                close(sock_fd);
+                return -1;
+            }
             fd = accept(sock_fd, NULL, 0);
             if (safewrite(fd, BUSY_MSG, sizeof(BUSY_MSG)))
             {
@@ -164,16 +158,16 @@ void* accept_client(void* args)
     }
     if (!(arg->num) && connected < MAX_CONNECTIONS)
     {
-        write (client_fd, "You are the FIRST player\n\r", 
-				sizeof("You are the FIRST player\n\r"));
+        write (client_fd, FIRST_PLAYER, 
+				          sizeof(FIRST_PLAYER));
         write (client_fd, WAIT, sizeof(WAIT));
         pthread_cond_wait(&cond, &mut);
         write (client_fd, FOUND, sizeof(FOUND));
     }
     else
     {
-        write (client_fd, "You are the SECOND player\n\r", 
-				sizeof("You are the SECOND player\n\r"));
+        write (client_fd, SECOND_PLAYER, 
+				          sizeof(SECOND_PLAYER));
     }
     while (1)
     {
