@@ -1,7 +1,18 @@
+#pragma once
+
 #ifndef _PLAYER_H
 #define _PLAYER_H
+
+
 #include "game.h"
 #include <vector>
+#include <pthread.h>
+enum status_t
+{
+    WAITING,
+    READY
+};
+
 enum magic_t
 {
     m_NONE,
@@ -12,7 +23,6 @@ enum magic_t
     EARTH,
     AIR
 };
-
 
 enum stat_t
 {
@@ -27,6 +37,7 @@ class Stats
 {
 	int health;
 	int shield;
+    friend class Player;
 	magic_t left_hand;
 	magic_t right_hand;
 			
@@ -60,23 +71,37 @@ class Buff
 class Player
 {
     number_t number;
-    friend class Stats;
     Stats stat;
     int socket_fd;
     std::vector<Buff> buffs;
+    status_t status;
     bool is_alive;
+
+    pthread_cond_t cond;
+    pthread_mutex_t mut;
    
-    void scaleHealth ();
-    public:
-	    Player(): stat(), socket_fd(-1), buffs(), is_alive(true) {}
-	   
+    int checkComand (char *str);
+       public:
+	    Player();
+	    
+        void lock();
+        void unlock();
+        void wait();
+        void broadcast();
+
+        
 	    //
 	    // SERVER METHODS
 	    //
-
+        
+        void setSocketFD(int sock_fd);
 	    int getSocketFD() {	return socket_fd;   }
-	    int acceptPlayer(int socket_fd);
+	    void* acceptPlayer(void* args);
 	    void diconnectFromServer ();
+        status_t getMode() { return status; }
+        const char* handToString(int hand);
+
+        void scaleHealth ();
 
 	    //
 	    //  SPELLS
