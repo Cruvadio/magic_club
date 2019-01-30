@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "player.h"
+#include <iostream>
 #include "strings.h"
 #include "game.h"
 
@@ -32,6 +33,7 @@ void Player::setSocketFD(int sock_fd)
 void* Player::acceptPlayer (GameManager &game, int num, int sock_fd)
 {
     char buf[1024];
+    bool firstTime = true;
     socket_fd = sock_fd;
     if (safewrite(socket_fd, SERVER_NAME, strlen(SERVER_NAME) * sizeof(char)))
     {
@@ -53,26 +55,29 @@ void* Player::acceptPlayer (GameManager &game, int num, int sock_fd)
     while (1)
     {
         int err;
+        if (!firstTime)
         wait();
-        write(socket_fd, PROMT, sizeof(PROMT));
         do
-        {
+        {            
+            write(socket_fd, PROMT, sizeof(PROMT));
+
             err = readstr(socket_fd, buf, 1024);
             if (err == -1)
             {
                 diconnectFromServer(game);
                 return NULL;
             }
-            lock();
             err = checkComand(buf);
-            unlock();
             if (err)
             {
                 write(socket_fd, UNKNOWN_CMD, sizeof(UNKNOWN_CMD));
                 continue;
             }
             else
+            {
+                printf("Correct command\n");
                 break;
+            }
         }while (true);
        
         if (game.getConnected() < MAX_CONNECTIONS)
@@ -82,46 +87,72 @@ void* Player::acceptPlayer (GameManager &game, int num, int sock_fd)
             return NULL;
         }
 
-        lock();
-            status = READY;
-            game.broadcast();
-        unlock();
+        status = READY;
+        printf("Player # %d broadcasting main\n", num);
+        game.unlock();
+        firstTime = false;
     }
+}
+
+void Player::setStatus(status_t st)
+{
+    status = st;
 }
 void* acceptPlayer(void* args)
 {
     thread_args *arg = (thread_args*) args;
     GameManager &game = *(arg->game);
     int num = arg->num;
+
+    printf("Player # %d, socket file descryptor = %d\n", num, arg->fd);
     return game.players[num].acceptPlayer(game, num, arg->fd); 
 }
 
 int Player::checkComand(char* str)
 {
+    char *(tokens[3]);
+    char *token = strtok(str, " \n\r");
+    int i = 0;
     std::string tmp(str);
     std::string lh, rh; // Left hand and right hand strings
-    if (tmp.find("cast") == std::string::npos)
+    
+    while (token != NULL && i < 3)
+    {
+        tokens[i] = token;
+        token = strtok(NULL, " \n\r");
+        i++;
+    }
+
+    if (i == 3)
+    {
+        lh = tokens[1];
+        rh = tokens[2];
+    }
+    if (strcmp(tokens[0], "cast"))
         return -1;
     else
     {
-        lh = tmp.substr(strlen("cast "), tmp.find(" ", strlen("cast ")));
-        rh = tmp.substr(strlen("cast ") + lh.length());
+        printf("Is cast\n");
         
-        if (!lh.compare("light")) stat.left_hand = LIGHT;
-        else if (!lh.compare("dark")) stat.left_hand = DARK;
-        else if (!lh.compare("fire")) stat.left_hand = FIRE;
-        else if (!lh.compare("water")) stat.left_hand = WATER;
-        else if (!lh.compare("earth")) stat.left_hand = EARTH;
-        else if (!lh.compare("air")) stat.left_hand = AIR;
+        std::cout << "First word: " << lh <<std::endl <<"Second word: " << rh << std::endl;
+
+        if (!strcmp(tokens[1], "light")) stat.left_hand = LIGHT;
+        else if (!strcmp(tokens[1], "dark")) stat.left_hand = DARK;
+        else if (!strcmp(tokens[1], "fire")) stat.left_hand = FIRE;
+        else if (!strcmp(tokens[1], "water")) stat.left_hand = WATER;
+        else if (!strcmp(tokens[1], "earth")) stat.left_hand = EARTH;
+        else if (!strcmp(tokens[1], "air")) stat.left_hand = AIR;
         else return -1;
 
-        if (!rh.compare("light")) stat.left_hand = LIGHT;
-        else if (!rh.compare("dark")) stat.right_hand = DARK;
-        else if (!rh.compare("fire")) stat.right_hand = FIRE;
-        else if (!rh.compare("water")) stat.right_hand = WATER;
-        else if (!rh.compare("earth")) stat.right_hand = EARTH;
-        else if (!rh.compare("air")) stat.right_hand = AIR;
+        if (!strcmp(tokens[2], "light")) stat.right_hand = LIGHT;
+        else if (!strcmp(tokens[2], "dark")) stat.right_hand = DARK;
+        else if (!strcmp(tokens[2], "fire")) stat.right_hand = FIRE;
+        else if (!strcmp(tokens[2], "water")) stat.right_hand = WATER;
+        else if (!strcmp(tokens[2], "earth")) stat.right_hand = EARTH;
+        else if (!strcmp(tokens[2], "air")) stat.right_hand = AIR;
         else return -1;
+
+        
     }
     return 0;
 }

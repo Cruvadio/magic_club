@@ -119,7 +119,9 @@ int main(int argc, char *argv[])
             args[i].num = i;
             args[i].fd = connections[i];
             args[i].game = &game;
-            if(pthread_create(&threads[i],NULL,acceptPlayer,&(args)))
+
+            printf("Client_fd = %d\n", connections[i]);
+            if(pthread_create(&threads[i],NULL,acceptPlayer,&(args[i])))
             {
                 printf("Can't create thread\n");
 
@@ -136,6 +138,7 @@ int main(int argc, char *argv[])
                 close(sock_fd);
                 return -1;
             }
+            game.broadcast();
             fd = accept(sock_fd, NULL, 0);
             if (safewrite(fd, BUSY_MSG, sizeof(BUSY_MSG)))
             {
@@ -175,8 +178,8 @@ void *waitForPlayers (void* args)
             }
             if (counter == MAX_CONNECTIONS)
                 break;
-            game.unlock();
-           game. wait();
+            game.lock();
+           //game.wait();
         }
         game.controlGame();
         game.gameStatus();
@@ -184,6 +187,7 @@ void *waitForPlayers (void* args)
         {
             game.players[i].broadcast();
         }
+        game.unlock();
     }
 }
 /*

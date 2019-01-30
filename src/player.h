@@ -112,7 +112,8 @@ class Player
 	    void diconnectFromServer (GameManager &game);
         status_t getMode() { return status; }
         const char* handToString(int hand);
-
+        
+        void setStatus(status_t st);
         void scaleHealth ();
         Stats& getStat();
 

@@ -12,30 +12,35 @@ void GameManager::gameStatus()
     int fd;
     int i;
     char str[1024];
-    for (i = 0; i < MAX_CONNECTIONS; i++)
+    for (int j = 0; j < MAX_CONNECTIONS; j++)
     {
-        fd = players[i].getSocketFD();
-        if (!i)
-            sprintf(str, "First player status:\n\r");
-        else
-            sprintf(str, "Second player status:\n\r");
-        write(fd, str, strlen(str));
-        sprintf(str, "Health: %d\n\r", players[i].getStat().getHealth());
-        write(fd, str, strlen(str));
-        sprintf(str, "Shield: %d\n\r", players[i].getStat().getShield());
-        write(fd, str, strlen(str));
-        if (players[i].getStat().getLeftHand() != m_NONE)
+        fd = players[j].getSocketFD();
+
+        for (i = 0; i < MAX_CONNECTIONS; i++)
         {
-            strcpy(str, players[i].handToString(0));
-            strcat(str, "\n\r");
-            write(fd, str, strlen(str)); 
+            if (!i)
+                sprintf(str, "First player status:\n\r");
+            else
+                sprintf(str, "Second player status:\n\r");
+            write(fd, str, strlen(str));
+            sprintf(str, "Health: %d\n\r", players[i].getStat().getHealth());
+            write(fd, str, strlen(str));
+            sprintf(str, "Shield: %d\n\r", players[i].getStat().getShield());
+            write(fd, str, strlen(str));
+            if (players[i].getStat().getLeftHand() != m_NONE)
+            {
+                strcpy(str, players[i].handToString(0));
+                strcat(str, "\n\r");
+                write(fd, str, strlen(str)); 
+            }
+            if (players[i].getStat().getRightHand() != m_NONE)
+            {
+                strcpy(str, players[i].handToString(1));
+                strcat(str, "\n\r");
+                write(fd, str, strlen(str)); 
+            }
         }
-        if (players[i].getStat().getRightHand() != m_NONE)
-        {
-            strcpy(str, players[i].handToString(1));
-            strcat(str, "\n\r");
-            write(fd, str, strlen(str)); 
-        }
+        players[j].setStatus(WAITING);
     }
 }
 
@@ -47,6 +52,7 @@ GameManager::GameManager() : socket_fd(-1),connected(0),players(MAX_CONNECTIONS)
 
 void GameManager::controlGame ()
 {
+    printf("Controlling game\n");
     for (int i = 0; i < MAX_CONNECTIONS; i++)
     {
         switch(players[i].getStat().getLeftHand())
