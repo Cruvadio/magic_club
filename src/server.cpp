@@ -21,21 +21,27 @@ int connections[MAX_CONNECTIONS];
 int connected = 0;
 int sock_fd;
 
+
 pthread_mutex_t mut;
 pthread_cond_t cond;
-thread_args args[MAX_CONNECTIONS];
+
+
 
 void *accept_client(void *args);
 void exit_handler (int signum);
 
 struct sockaddr_in sockaddr;
 
+void *waitForPlayers (void* args);
+
 int main(int argc, char *argv[])
 {
+    GameManager game;
+    thread_args args[MAX_CONNECTIONS];
     uid_t euid;
     int opt = 1;
     int port;
-    int i;
+    int connections[MAX_CONNECTIONS] = {-1, -1};
     pthread_t threads[MAX_CONNECTIONS];
     pthread_t server_thread;
 
@@ -81,38 +87,39 @@ int main(int argc, char *argv[])
         perror("Can`t listen socket\n");
         return 1;
     }
-
+    
     while(1)
     {
         int i;
         int fd;
-
         
-        if (GameManager::getGameManager().getConnected() < MAX_CONNECTIONS)
+        if (game.getConnected() < MAX_CONNECTIONS)
         {
-            int connected = GameManager::getGameManager().getConnected();
+            int connected = game.getConnected();
             for (i = 0; i < MAX_CONNECTIONS; i++)
             {
-                if (GameManager::getGameManager().players[i].getSocketFD()  == -1)
+                if (connections[i]  == -1)
                 {
                     break;
                 }
             }
-            fd = accept(sock_fd, NULL, 0);
-            if(fd == -1)
+            connections[i] = accept(sock_fd, NULL, 0);
+            if(connections[i] == -1)
             {
                 perror("Client socket has been not created\n");
                 return 1;
             }
-            GameManager::getGameManager().players[i].setSocketFD(fd);
-            GameManager::getGameManager().lock();
+            game.players[i].setSocketFD(connections[i]);
+            game.lock();
                 connected++;
-                GameManager::getGameManager().setConnected(connected);
-            GameManager::getGameManager().unlock();            
+                game.setConnected(connected);
+            game.unlock();            
             if (connected == MAX_CONNECTIONS)
-                GameManager::getGameManager().players[0].broadcast();
-
-            if(pthread_create(&threads[i],NULL,GameManager::getGameManager().players[i].acceptPlayer,&(fd))
+                game.players[0].broadcast();
+            args[i].num = i;
+            args[i].fd = connections[i];
+            args[i].game = &game;
+            if(pthread_create(&threads[i],NULL,acceptPlayer,&(args)))
             {
                 printf("Can't create thread\n");
 
@@ -122,7 +129,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            if(pthread_create(&threads[i],NULL,GameManager::getGameManager().waitForPlayers,&(fd))
+            if(pthread_create(&server_thread, NULL, waitForPlayers, &game))
             {
                 printf("Can't create thread\n");
 
@@ -135,6 +142,8 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Can't write message for client\n");
                 close(fd);
             }
+            for (int i = 0; i < MAX_CONNECTIONS; i++)
+                connections[i] = -1;
             close(fd);
             pthread_cond_wait(&cond, &mut);
             continue;
@@ -144,6 +153,40 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void *waitForPlayers (void* args)
+{    
+    GameManager &game = *(GameManager*) args;
+    int counter = 0;
+
+    for (int i = 0; i < MAX_CONNECTIONS; i++)
+    {
+        game.players[i].broadcast();
+    }
+    while(true)
+    {
+        while (true)
+        {
+            counter = 0;
+            game.lock();
+            for (int i = 0; i < MAX_CONNECTIONS; i++)
+            {
+                if (game.players[i].getMode() == READY)
+                    counter++;
+            }
+            if (counter == MAX_CONNECTIONS)
+                break;
+            game.unlock();
+           game. wait();
+        }
+        game.controlGame();
+        game.gameStatus();
+        for (int i = 0; i < MAX_CONNECTIONS; i++)
+        {
+            game.players[i].broadcast();
+        }
+    }
+}
+/*
 void* accept_client(void* args)
 {
     thread_args* arg = (thread_args*) args;
@@ -204,6 +247,8 @@ void* accept_client(void* args)
         }
     }
 }
+*/
+
 
 void exit_handler (int signum)
 {

@@ -3,10 +3,18 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
-
-#include "game.h"
 #include <vector>
 #include <pthread.h>
+#include "game.h"
+
+
+class GameManager;
+enum number_t
+{
+    FIRST = 1,
+    SECOND
+};
+
 enum status_t
 {
     WAITING,
@@ -53,6 +61,7 @@ class Stats
 		magic_t getLeftHand();
 		magic_t getRightHand();
 };
+/*
 class Buff
 {
 	int time;
@@ -67,13 +76,15 @@ class Buff
 		void tick();
 		void activate();
 };
+*/
+void* acceptPlayer(void* args);
 
 class Player
 {
     number_t number;
     Stats stat;
     int socket_fd;
-    std::vector<Buff> buffs;
+   // std::vector<Buff> buffs;
     status_t status;
     bool is_alive;
 
@@ -89,30 +100,22 @@ class Player
         void wait();
         void broadcast();
 
-        
+     //   void addBuff (Buff buff);
+       // void removeBuff(Buff buff);
 	    //
 	    // SERVER METHODS
 	    //
         
         void setSocketFD(int sock_fd);
 	    int getSocketFD() {	return socket_fd;   }
-	    void* acceptPlayer(void* args);
-	    void diconnectFromServer ();
+	    void* acceptPlayer(GameManager& game, int num, int fd);
+	    void diconnectFromServer (GameManager &game);
         status_t getMode() { return status; }
         const char* handToString(int hand);
 
         void scaleHealth ();
+        Stats& getStat();
 
-	    //
-	    //  SPELLS
-	    //
-
-	    void lightSpell();
-	    void darkSpell();
-	    void fireSpell();
-	    void waterSpell();
-	    void earthSpell();
-	    void airSpell();
 	    //
 	    // DESTRUCTOR
 	    //

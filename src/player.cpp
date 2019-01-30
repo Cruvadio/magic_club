@@ -11,7 +11,7 @@
 #include "game.h"
 
 
-Player::Player() : stat(), socket_fd(-1), buffs(), status(WAITING), is_alive(true)
+Player::Player() : stat(), socket_fd(-1),/* buffs(),*/ status(WAITING), is_alive(true)
 {
     number = FIRST;
     pthread_cond_init(&cond, NULL);
@@ -24,18 +24,22 @@ Player::~Player()
     pthread_mutex_destroy(&mut);
 }
 
-void* Player::acceptPlayer(void* args)
+void Player::setSocketFD(int sock_fd)
 {
-    socket_fd = *(int*) args;
+    socket_fd = sock_fd;
+}
+
+void* Player::acceptPlayer (GameManager &game, int num, int sock_fd)
+{
     char buf[1024];
-    
+    socket_fd = sock_fd;
     if (safewrite(socket_fd, SERVER_NAME, strlen(SERVER_NAME) * sizeof(char)))
     {
          fprintf(stderr, "Can't write message for client\n");
          close(socket_fd);
          return NULL;
     }
-    if (!(number == FIRST) && GameManager::getGameManager().getConnected() < MAX_CONNECTIONS)
+    if (!(num) && game.getConnected() < MAX_CONNECTIONS)
     {
         write (socket_fd, FIRST_PLAYER,sizeof(FIRST_PLAYER));
         write (socket_fd, WAIT, sizeof(WAIT));
@@ -56,7 +60,7 @@ void* Player::acceptPlayer(void* args)
             err = readstr(socket_fd, buf, 1024);
             if (err == -1)
             {
-                diconnectFromServer();
+                diconnectFromServer(game);
                 return NULL;
             }
             lock();
@@ -71,19 +75,25 @@ void* Player::acceptPlayer(void* args)
                 break;
         }while (true);
        
-        if (GameManager::getGameManager().getConnected() < MAX_CONNECTIONS)
+        if (game.getConnected() < MAX_CONNECTIONS)
         { 
             write(socket_fd, SORRY, sizeof(SORRY));
-            diconnectFromServer();
+            diconnectFromServer(game);
             return NULL;
         }
 
         lock();
             status = READY;
-            GameManager::getGameManager().broadcast();
+            game.broadcast();
         unlock();
     }
-
+}
+void* acceptPlayer(void* args)
+{
+    thread_args *arg = (thread_args*) args;
+    GameManager &game = *(arg->game);
+    int num = arg->num;
+    return game.players[num].acceptPlayer(game, num, arg->fd); 
 }
 
 int Player::checkComand(char* str)
@@ -113,22 +123,29 @@ int Player::checkComand(char* str)
         else if (!rh.compare("air")) stat.right_hand = AIR;
         else return -1;
     }
+    return 0;
 }
 
-void Player::diconnectFromServer()
+void Player::diconnectFromServer(GameManager &game)
 {
     printf ("Client has disconnected\n");
-     GameManager::getGameManager().lock();
+     game.lock();
     {
-        int connected = GameManager::getGameManager().getConnected();
+        int connected = game.getConnected();
         socket_fd = -1;
         connected--;
-        GameManager::getGameManager().setConnected(connected);
-        GameManager::getGameManager().broadcast();
+        game.setConnected(connected);
+        game.broadcast();
     }
-    GameManager::getGameManager().lock();
+    game.lock();
     close(socket_fd);
 }
+
+Stats& Player::getStat()
+{
+    return stat;
+}
+
 
 void Player::lock()
 {
@@ -172,7 +189,7 @@ const char* Player::handToString (int hand)
                 return "Earth magic";
                 break;
             case AIR:
-                return "Ait magic";
+                return "Air magic";
                 break;
             default:
                 return "Unknown magic";
@@ -199,7 +216,7 @@ const char* Player::handToString (int hand)
                 return "Earth magic";
                 break;
             case AIR:
-                return "Ait magic";
+                return "Air magic";
                 break;
             default:
                 return "Unknown magic";
@@ -224,6 +241,16 @@ void Player::scaleHealth()
 	}	
 }
 
+magic_t Stats::getLeftHand ()
+{
+    return left_hand;
+}
+
+magic_t Stats::getRightHand()
+{
+    return right_hand;
+}
+
 void Stats::setHealth(int health)
 {
 	this->health = health;
@@ -231,6 +258,19 @@ void Stats::setHealth(int health)
 
 void Stats::addHealth(int health)
 {
+    if (health < 0)
+    {
+        int difference;
+        difference = shield + health;
+        if (shield)
+        {
+            shield+= health;
+            if (shield < 0)
+                shield = 0;
+        }
+        if (difference < 0)
+            this->health += difference;
+    }
 	this->health += health;
 }
 

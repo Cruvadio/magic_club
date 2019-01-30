@@ -14,36 +14,123 @@ void GameManager::gameStatus()
     char str[1024];
     for (i = 0; i < MAX_CONNECTIONS; i++)
     {
-        fd = game.players[i].getSocketFD();
+        fd = players[i].getSocketFD();
         if (!i)
             sprintf(str, "First player status:\n\r");
         else
             sprintf(str, "Second player status:\n\r");
         write(fd, str, strlen(str));
-        sprintf(str, "Health: %d\n\r", game.players[i].getHealth());
+        sprintf(str, "Health: %d\n\r", players[i].getStat().getHealth());
         write(fd, str, strlen(str));
-        sprintf(str, "Shield: %d\n\r", game.players[i].getShield());
+        sprintf(str, "Shield: %d\n\r", players[i].getStat().getShield());
         write(fd, str, strlen(str));
-        if (game.players[i].getLeftHand() != m_NONE)
+        if (players[i].getStat().getLeftHand() != m_NONE)
         {
-            strcpy(str, game.players[i].handToString(0));
+            strcpy(str, players[i].handToString(0));
             strcat(str, "\n\r");
             write(fd, str, strlen(str)); 
         }
-        if (game.players[i].getRightHand() != m_NONE)
+        if (players[i].getStat().getRightHand() != m_NONE)
         {
-            strcpy(str, game.players[i].handToString(1));
+            strcpy(str, players[i].handToString(1));
             strcat(str, "\n\r");
             write(fd, str, strlen(str)); 
         }
     }
 }
 
-GameManager::GameManager() : socket_fd(-1), players(), connected(0)
+GameManager::GameManager() : socket_fd(-1),connected(0),players(MAX_CONNECTIONS)
 {
-    game = *this;
     pthread_cond_init(&cond, NULL);
     pthread_mutex_init(&mut, NULL);
+}
+
+void GameManager::controlGame ()
+{
+    for (int i = 0; i < MAX_CONNECTIONS; i++)
+    {
+        switch(players[i].getStat().getLeftHand())
+        {
+            case LIGHT:
+                    lightSpell(i);
+                    break;
+            case DARK:
+                    darkSpell(i);
+                    break;
+            case FIRE:
+                    fireSpell(i);
+                    break;
+            case WATER:
+                    waterSpell(i);
+                    break;
+            case EARTH:
+                    earthSpell(i);
+                    break;
+            case AIR:
+                    airSpell(i);
+                    break;
+        }
+        switch(players[i].getStat().getRightHand())
+        {
+            case LIGHT:
+                    lightSpell(i);
+                    break;
+            case DARK:
+                    darkSpell(i);
+                    break;
+            case FIRE:
+                    fireSpell(i);
+                    break;
+            case WATER:
+                    waterSpell(i);
+                    break;
+            case EARTH:
+                    earthSpell(i);
+                    break;
+            case AIR:
+                    airSpell(i);
+                    break;
+        }
+
+        if (!players[i].getStat().getHealth())
+        {
+            players[i].diconnectFromServer(*this);
+            pthread_exit(NULL);
+        }
+    }
+}
+
+void GameManager::setConnected(int connected)
+{
+    this->connected = connected;
+}
+
+void GameManager::lightSpell(int player_num)
+{
+    players[player_num].getStat().addHealth(LIGHT_HEALTH);
+    players[player_num].scaleHealth();
+}
+
+void GameManager::darkSpell(int player_num)
+{
+    players[!player_num].getStat().addHealth(DARK_DAMAGE);
+    players[!player_num].scaleHealth();
+}
+void GameManager::waterSpell(int player_num)
+{
+
+}
+void GameManager::fireSpell(int player_num)
+{
+    players[!player_num].getStat().addHealth(FIRE_DAMAGE);
+}
+void GameManager::earthSpell(int player_num)
+{
+    players[player_num].getStat().addShield(EARTH_SHIELD);
+}
+void GameManager::airSpell(int player_num)
+{
+
 }
 
 GameManager::~GameManager()
@@ -71,34 +158,4 @@ void GameManager::broadcast()
     pthread_cond_broadcast(&cond);
 }
 
-void * GameManager::waitForPlayers (void* args)
-{
-    int counter = 0;
 
-    for (int i = 0; i < MAX_CONNECTIONS; i++)
-    {
-        players[i].broadcast();
-    }
-    while(true)
-    {
-        while (true)
-        {
-            counter = 0;
-            lock();
-            for (int i = 0; i < MAX_CONNECTIONS; i++)
-            {
-                if (game.players[i].getMode() == READY)
-                    counter++;
-            }
-            if (counter == MAX_CONNECTIONS)
-                break;
-            unlock();
-            wait();
-        }
-        gameStatus();
-        for (int i = 0; i < MAX_CONNECTIONS; i++)
-        {
-            players[i].broadcast();
-        }
-    }
-}
