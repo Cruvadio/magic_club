@@ -168,7 +168,7 @@ void Player::diconnectFromServer(GameManager &game)
         game.setConnected(connected);
         game.broadcast();
     }
-    game.lock();
+    game.unlock();
     close(socket_fd);
 }
 
@@ -289,8 +289,8 @@ void Stats::setHealth(int health)
 
 void Stats::addHealth(int health)
 {
-    if (health < 0)
-    {
+    if (health < 0 && shield > 0)
+    { 
         int difference;
         difference = shield + health;
         if (shield)
@@ -302,7 +302,8 @@ void Stats::addHealth(int health)
         if (difference < 0)
             this->health += difference;
     }
-	this->health += health;
+    else     
+	    this->health += health;
 }
 
 void Stats::addShield (int shield)

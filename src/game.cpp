@@ -119,8 +119,10 @@ void GameManager::lightSpell(int player_num)
 
 void GameManager::darkSpell(int player_num)
 {
-    players[!player_num].getStat().addHealth(DARK_DAMAGE);
-    players[!player_num].scaleHealth();
+    int enemy_num = player_num ? 0 : 1;
+    printf("Player # %d my enemy %d\n", player_num, enemy_num);
+    players[enemy_num].getStat().addHealth(DARK_DAMAGE);
+    players[enemy_num].scaleHealth();
 }
 void GameManager::waterSpell(int player_num)
 {

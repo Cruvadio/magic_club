@@ -169,6 +169,8 @@ void *waitForPlayers (void* args)
     {
         while (true)
         {
+            if (connected < MAX_CONNECTIONS)
+                return NULL;
             counter = 0;
             game.lock();
             for (int i = 0; i < MAX_CONNECTIONS; i++)
