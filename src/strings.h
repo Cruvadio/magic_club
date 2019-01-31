@@ -1,7 +1,7 @@
 #pragma once
 
-#define SERVER_NAME "Welcome to 'Mage Club' ver 0.0.3!\n\r"
-#define BUSY_MSG "'Mage Club Server ver 0.0.3: Sorry, the game has already started\n\r"
+#define SERVER_NAME "Welcome to 'Mage Club' ver 0.1.0!\n\r"
+#define BUSY_MSG "'Mage Club Server ver 0.1.0: Sorry, the game has already started\n\r"
 #define FIRST_PLAYER "You are the FIRST player\n\r"
 #define SECOND_PLAYER "You are the SECOND player\n\r"
 #define PROMT ">> "

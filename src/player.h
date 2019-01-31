@@ -9,6 +9,7 @@
 
 
 class GameManager;
+class Player;
 enum number_t
 {
     FIRST = 1,
@@ -61,22 +62,27 @@ class Stats
 		magic_t getLeftHand();
 		magic_t getRightHand();
 };
-/*
+
 class Buff
 {
+    friend class Player;
 	int time;
 	stat_t st;
+    int value;
 	bool is_active;
+    bool is_increasing;
 	
 	public:
-		Buff(): time(0), st(st_NONE), is_active(false) {}
+		Buff(): time(0), st(st_NONE), value(0), is_active(false), is_increasing(false) {}
 		Buff(Buff &buff);
-		Buff(int time, stat_t st =st_NONE, bool is_active = false);
+		Buff(int time, stat_t st =st_NONE,int value = 0, bool is_active = false, bool is_increasing = false);
 		int getTime();
 		void tick();
 		void activate();
+
+        bool operator==(const Buff &buff);
 };
-*/
+
 void* acceptPlayer(void* args);
 
 class Player
@@ -84,7 +90,7 @@ class Player
     number_t number;
     Stats stat;
     int socket_fd;
-   // std::vector<Buff> buffs;
+    std::vector<Buff> buffs;
     status_t status;
     bool is_alive;
 
@@ -100,8 +106,11 @@ class Player
         void wait();
         void broadcast();
 
-     //   void addBuff (Buff buff);
-       // void removeBuff(Buff buff);
+        int  containsBuff(Buff buff);
+
+        std::vector<Buff> & getBuffs ();
+        void addBuff (Buff buff);
+        void removeBuff(Buff buff);
 	    //
 	    // SERVER METHODS
 	    //

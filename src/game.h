@@ -5,7 +5,7 @@
 #define _GAME_H
 
 #include <pthread.h>
-#include "/home/cruvadio/src/magic_club/src/player.h"
+#include "player.h"
 
 #define MAX_CONNECTIONS 2
 #define MAX_HEALTH 100
@@ -61,12 +61,13 @@ class GameManager
         //
 	    //  SPELLS
 	    //
+        void checkBuffs();
 
-	    void lightSpell(int player_num);
-	    void darkSpell(int player_num);
-	    void fireSpell(int player_num);
+	    void lightSpell(int player_num, bool is_increased = false);
+	    void darkSpell(int player_num, bool is_increased = false);
+	    void fireSpell(int player_num, bool is_increased = false);
 	    void waterSpell(int player_num);
-	    void earthSpell(int player_num);
+	    void earthSpell(int player_num, bool is_increased = false);
 	    void airSpell(int player_num);
 
         ~GameManager();

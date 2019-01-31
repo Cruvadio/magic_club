@@ -50,27 +50,55 @@ GameManager::GameManager() : socket_fd(-1),connected(0),players(MAX_CONNECTIONS)
     pthread_mutex_init(&mut, NULL);
 }
 
+void GameManager::checkBuffs()
+{
+    for (int i = 0; i < MAX_CONNECTIONS; i++)
+    {
+        if (players[i].getBuffs().empty()) continue;
+        else
+        {
+            for (int j = 0; j < (int)players[i].getBuffs().size(); j++)
+            {
+                if (!players[i].getBuffs()[j].getTime()) 
+                {
+                    players[i].getBuffs().erase(players[i].getBuffs().begin() + j);
+                }
+                else 
+                {
+                    // TO DO
+                    // Activation of buffs
+                    // players[i].getBuffs()[j].activate();
+                }
+            }
+        }
+    }
+}
+
 void GameManager::controlGame ()
 {
+    bool is_increased = false;
     printf("Controlling game\n");
     for (int i = 0; i < MAX_CONNECTIONS; i++)
     {
+        Buff buff(0, st_NONE, 0, false, true);
+        if (players[i].containsBuff(buff) == -1)
+            is_increased = true;
         switch(players[i].getStat().getLeftHand())
         {
             case LIGHT:
-                    lightSpell(i);
+                    lightSpell(i, is_increased);
                     break;
             case DARK:
-                    darkSpell(i);
+                    darkSpell(i, is_increased);
                     break;
             case FIRE:
-                    fireSpell(i);
+                    fireSpell(i, is_increased);
                     break;
             case WATER:
                     waterSpell(i);
                     break;
             case EARTH:
-                    earthSpell(i);
+                    earthSpell(i, is_increased);
                     break;
             case AIR:
                     airSpell(i);
@@ -79,19 +107,19 @@ void GameManager::controlGame ()
         switch(players[i].getStat().getRightHand())
         {
             case LIGHT:
-                    lightSpell(i);
+                    lightSpell(i, is_increased);
                     break;
             case DARK:
-                    darkSpell(i);
+                    darkSpell(i, is_increased);
                     break;
             case FIRE:
-                    fireSpell(i);
+                    fireSpell(i, is_increased);
                     break;
             case WATER:
                     waterSpell(i);
                     break;
             case EARTH:
-                    earthSpell(i);
+                    earthSpell(i, is_increased);
                     break;
             case AIR:
                     airSpell(i);
@@ -110,35 +138,41 @@ void GameManager::setConnected(int connected)
 {
     this->connected = connected;
 }
-
-void GameManager::lightSpell(int player_num)
+void GameManager::lightSpell(int player_num, bool is_increased)
 {
-    players[player_num].getStat().addHealth(LIGHT_HEALTH);
+    players[player_num].getStat().addHealth(!is_increased ? LIGHT_HEALTH : LIGHT_HEALTH * 2);
     players[player_num].scaleHealth();
 }
 
-void GameManager::darkSpell(int player_num)
+void GameManager::darkSpell(int player_num, bool is_increased)
 {
     int enemy_num = player_num ? 0 : 1;
     printf("Player # %d my enemy %d\n", player_num, enemy_num);
-    players[enemy_num].getStat().addHealth(DARK_DAMAGE);
+    players[enemy_num].getStat().addHealth(!is_increased ? DARK_DAMAGE : DARK_DAMAGE * 2);
     players[enemy_num].scaleHealth();
 }
 void GameManager::waterSpell(int player_num)
 {
+    Buff regeneration(WATER_BUFF_REGENERATION_DURATION, HEALTH, WATER_BUFF_REGENERATION_HEALTH, true);
+    Buff  froze(WATER_BUFF_FROST);
 
+    players[player_num].addBuff(regeneration);
+    players[!player_num].addBuff(froze);
 }
-void GameManager::fireSpell(int player_num)
+void GameManager::fireSpell(int player_num, bool is_increased)
 {
-    players[!player_num].getStat().addHealth(FIRE_DAMAGE);
+    Buff burning(!is_increased ? FIRE_BUFF_DURATION : FIRE_BUFF_DURATION * 2, DAMAGE, FIRE_BUFF_DAMAGE, true);
+    players[!player_num].addBuff(burning);
+    players[!player_num].getStat().addHealth(!is_increased ? FIRE_DAMAGE : FIRE_DAMAGE * 2);
 }
-void GameManager::earthSpell(int player_num)
+void GameManager::earthSpell(int player_num, bool is_increased)
 {
-    players[player_num].getStat().addShield(EARTH_SHIELD);
+    players[player_num].getStat().addShield(!is_increased ? EARTH_SHIELD : EARTH_SHIELD * 2);
 }
 void GameManager::airSpell(int player_num)
 {
-
+    Buff increase(AIR_DURATION, st_NONE, 0, false, true);
+    players[player_num].addBuff(increase);
 }
 
 GameManager::~GameManager()

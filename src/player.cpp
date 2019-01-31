@@ -131,9 +131,7 @@ int Player::checkComand(char* str)
     if (strcmp(tokens[0], "cast"))
         return -1;
     else
-    {
-        printf("Is cast\n");
-        
+    { 
         std::cout << "First word: " << lh <<std::endl <<"Second word: " << rh << std::endl;
 
         if (!strcmp(tokens[1], "light")) stat.left_hand = LIGHT;
@@ -270,6 +268,35 @@ void Player::scaleHealth()
 		this->stat.setHealth(MIN_HEALTH);
 		this->is_alive = false;
 	}	
+}
+
+bool Buff::operator==(const Buff & buff)
+{
+    return (st == buff.st && is_active == buff.is_active);
+}
+
+int Player::containsBuff(Buff buff)
+{
+    for (int i = 0; i < (int)buffs.size(); i++)
+    {
+        if (buffs[i] == buff)
+            return i;
+    }
+    return -1;
+}
+
+void Player::addBuff (Buff buff)
+{
+    int i = containsBuff(buff);
+    if (i == -1)
+        buffs.push_back (buff);
+    else buffs[i].time = buff.time;
+}
+
+void Player::removeBuff(Buff buff)
+{
+    int i = containsBuff(buff);
+    buffs.erase(buffs.begin() + i);
 }
 
 magic_t Stats::getLeftHand ()
