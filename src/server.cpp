@@ -165,6 +165,7 @@ void *waitForPlayers (void* args)
     {
         game.players[i].broadcast();
     }
+    game.unlock();
     while(true)
     {
         while (true)

@@ -65,9 +65,7 @@ void GameManager::checkBuffs()
                 }
                 else 
                 {
-                    // TO DO
-                    // Activation of buffs
-                    // players[i].getBuffs()[j].activate();
+                    players[i].activateBuff(j);
                 }
             }
         }
@@ -77,55 +75,61 @@ void GameManager::checkBuffs()
 void GameManager::controlGame ()
 {
     bool is_increased = false;
+    bool is_freezed = false;
     printf("Controlling game\n");
     for (int i = 0; i < MAX_CONNECTIONS; i++)
     {
         Buff buff(0, st_NONE, 0, false, true);
-        if (players[i].containsBuff(buff) == -1)
+        Buff freeze;
+        if (players[i].containsBuff(freeze)!= -1)
+            is_freezed = true;
+        if (players[i].containsBuff(buff) != -1)
             is_increased = true;
-        switch(players[i].getStat().getLeftHand())
+        if (!is_freezed)
         {
-            case LIGHT:
-                    lightSpell(i, is_increased);
-                    break;
-            case DARK:
-                    darkSpell(i, is_increased);
-                    break;
-            case FIRE:
-                    fireSpell(i, is_increased);
-                    break;
-            case WATER:
-                    waterSpell(i);
-                    break;
-            case EARTH:
-                    earthSpell(i, is_increased);
-                    break;
-            case AIR:
-                    airSpell(i);
-                    break;
+            switch(players[i].getStat().getLeftHand())
+            {
+                case LIGHT:
+                        lightSpell(i, is_increased);
+                        break;
+                case DARK:
+                        darkSpell(i, is_increased);
+                        break;
+                case FIRE:
+                        fireSpell(i, is_increased);
+                        break;
+                case WATER:
+                        waterSpell(i);
+                        break;
+                case EARTH:
+                        earthSpell(i, is_increased);
+                        break;
+                case AIR:
+                        airSpell(i);
+                        break;
+            }
+            switch(players[i].getStat().getRightHand())
+            {
+                case LIGHT:
+                        lightSpell(i, is_increased);
+                        break;
+                case DARK:
+                        darkSpell(i, is_increased);
+                        break;
+                case FIRE:
+                        fireSpell(i, is_increased);
+                        break;
+                case WATER:
+                        waterSpell(i);
+                        break;
+                case EARTH:
+                        earthSpell(i, is_increased);
+                        break;
+                case AIR:
+                        airSpell(i);
+                        break;
+            }
         }
-        switch(players[i].getStat().getRightHand())
-        {
-            case LIGHT:
-                    lightSpell(i, is_increased);
-                    break;
-            case DARK:
-                    darkSpell(i, is_increased);
-                    break;
-            case FIRE:
-                    fireSpell(i, is_increased);
-                    break;
-            case WATER:
-                    waterSpell(i);
-                    break;
-            case EARTH:
-                    earthSpell(i, is_increased);
-                    break;
-            case AIR:
-                    airSpell(i);
-                    break;
-        }
-
         if (!players[i].getStat().getHealth())
         {
             players[i].diconnectFromServer(*this);

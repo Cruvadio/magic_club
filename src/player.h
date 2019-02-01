@@ -74,11 +74,10 @@ class Buff
 	
 	public:
 		Buff(): time(0), st(st_NONE), value(0), is_active(false), is_increasing(false) {}
-		Buff(Buff &buff);
+		Buff(const Buff &buff);
 		Buff(int time, stat_t st =st_NONE,int value = 0, bool is_active = false, bool is_increasing = false);
 		int getTime();
 		void tick();
-		void activate();
 
         bool operator==(const Buff &buff);
 };
@@ -100,6 +99,8 @@ class Player
     int checkComand (char *str);
        public:
 	    Player();
+
+        void activateBuff(int i);
 	    
         void lock();
         void unlock();

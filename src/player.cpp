@@ -94,6 +94,51 @@ void* Player::acceptPlayer (GameManager &game, int num, int sock_fd)
     }
 }
 
+std::vector<Buff>& Player::getBuffs()
+{
+    return buffs;
+}
+
+int Buff::getTime()
+{
+    return time;
+}
+
+void Buff::tick()
+{
+    time--;
+}
+
+Buff::Buff(const Buff &buff)
+{
+    time = buff.time;
+    st = buff.st;
+    value = buff.value;
+    is_active = buff.is_active;
+    is_increasing = buff.is_increasing;
+}
+
+Buff::Buff(int time, stat_t st, int value, bool is_active, bool is_increasing)
+{
+    this->time = time;
+    this->st = st;
+    this->value = value;
+    this->is_active = is_active;
+    this->is_increasing = is_increasing;
+}
+
+void Player::activateBuff(int i)
+{
+    buffs[i].tick();
+    if (buffs[i].st != st_NONE)
+    {
+        if (buffs[i].st == DAMAGE)
+            stat.addHealth(-buffs[i].value);
+        else if (buffs[i].st == HEALTH)
+            stat.addHealth(buffs[i].value);
+    }
+}
+
 void Player::setStatus(status_t st)
 {
     status = st;
