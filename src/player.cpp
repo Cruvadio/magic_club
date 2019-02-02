@@ -136,6 +136,8 @@ void Player::activateBuff(int i)
             stat.addHealth(-buffs[i].value);
         else if (buffs[i].st == HEALTH)
             stat.addHealth(buffs[i].value);
+
+        scaleHealth();
     }
 }
 
@@ -317,7 +319,7 @@ void Player::scaleHealth()
 
 bool Buff::operator==(const Buff & buff)
 {
-    return (st == buff.st && is_active == buff.is_active);
+    return (st == buff.st && is_active == buff.is_active && is_increasing == buff.is_increasing && value == buff.value);
 }
 
 int Player::containsBuff(Buff buff)

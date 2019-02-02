@@ -76,6 +76,8 @@ void GameManager::controlGame ()
 {
     bool is_increased = false;
     bool is_freezed = false;
+
+    checkBuffs();
     printf("Controlling game\n");
     for (int i = 0; i < MAX_CONNECTIONS; i++)
     {
@@ -175,7 +177,7 @@ void GameManager::earthSpell(int player_num, bool is_increased)
 }
 void GameManager::airSpell(int player_num)
 {
-    Buff increase(AIR_DURATION, st_NONE, 0, false, true);
+    Buff increase(AIR_DURATION, st_NONE, 0, true, true);
     players[player_num].addBuff(increase);
 }
 

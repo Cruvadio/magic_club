@@ -16,15 +16,7 @@
 #include "game.h"
 #include "strings.h"
 
-int sem_id;
-int connections[MAX_CONNECTIONS];
-int connected = 0;
 int sock_fd;
-
-
-pthread_mutex_t mut;
-pthread_cond_t cond;
-
 
 
 void *accept_client(void *args);
@@ -148,7 +140,7 @@ int main(int argc, char *argv[])
             for (int i = 0; i < MAX_CONNECTIONS; i++)
                 connections[i] = -1;
             close(fd);
-            pthread_cond_wait(&cond, &mut);
+            game.wait();
             continue;
         }
     }
@@ -170,10 +162,14 @@ void *waitForPlayers (void* args)
     {
         while (true)
         {
-            if (connected < MAX_CONNECTIONS)
+            if (game.getConnected() < MAX_CONNECTIONS)
+            {
+                game.broadcast();
                 return NULL;
+            }
             counter = 0;
             game.lock();
+            printf("Waiting for READY\n");
             for (int i = 0; i < MAX_CONNECTIONS; i++)
             {
                 if (game.players[i].getMode() == READY)
@@ -184,6 +180,7 @@ void *waitForPlayers (void* args)
             game.lock();
            //game.wait();
         }
+        printf("Controlling game\n");
         game.controlGame();
         game.gameStatus();
         for (int i = 0; i < MAX_CONNECTIONS; i++)
@@ -260,7 +257,6 @@ void* accept_client(void* args)
 void exit_handler (int signum)
 {
     signal(signum, exit_handler);
-    semctl(sem_id, 2, IPC_RMID);
     close(sock_fd);
     exit(0);
 }
